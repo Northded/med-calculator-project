@@ -51,7 +51,7 @@ class CaloriesInput(BaseModel):
     age: Annotated[int, Field(gt=0, le=150)]
     weight: Annotated[float, Field(gt=0)]
     height: Annotated[float, Field(gt=0)]
-    gender: Annotated[str, Field(regex="^(м|ж)$")]
+    gender: Annotated[str, Field(pattern="^(м|ж)$")]
     activity: Annotated[float, Field(default=1.5, ge=1.2, le=1.9)]
 
 class BloodPressureInput(BaseModel):

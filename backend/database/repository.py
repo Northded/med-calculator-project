@@ -2,7 +2,7 @@ from sqlalchemy import select, desc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from fastapi import HTTPException
 from . import models, schemas
-from deps import SessionDep
+from ..deps import SessionDep
 import logging
 
 logger = logging.getLogger(__name__)

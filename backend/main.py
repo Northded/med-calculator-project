@@ -4,7 +4,8 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-
+from backend.routes.calculations import router as calc_router
+from backend.routes.health import router as health_router
 from backend.database.db import create_db
 
 
@@ -65,6 +66,10 @@ async def log_requests(request: Request, call_next):
     )
 
     return response
+
+
+app.include_router(health_router, prefix="/api")
+app.include_router(calc_router, prefix="/api")
 
 
 if __name__ == "__main__":
