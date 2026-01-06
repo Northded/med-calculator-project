@@ -15,3 +15,5 @@ build/
 .vscode/
 .idea/
 postgres_data/
+alembic.ini
+migrations/
