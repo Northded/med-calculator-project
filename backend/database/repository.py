@@ -7,41 +7,40 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class CalculatorRepository():
     def __init__(self, session: SessionDep):
         self.session = session
 
     # ===== USER OPERATIONS =====
-    async def get_or_create_user(self, user_id: str, email: str = None):
+    async def get_or_create_user(self, user_id: str):
         """Получить существующего пользователя или создать нового"""
         try:
             result = await self.session.execute(
                 select(models.User).where(models.User.user_id == user_id)
             )
             user = result.scalar_one_or_none()
-
+            
             if not user:
-                user = models.User(user_id=user_id, email=email)
+                user = models.User(user_id=user_id)
                 self.session.add(user)
                 await self.session.commit()
                 await self.session.refresh(user)
                 logger.info(f"Создан новый пользователь: {user_id}")
-
+            
             return user
-
+            
         except IntegrityError as e:
             await self.session.rollback()
             logger.error(f"Ошибка целостности при создании пользователя {user_id}: {e}")
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Пользователь с таким ID уже существует"
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
             logger.error(f"Ошибка БД при создании пользователя {user_id}: {e}")
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail="Ошибка базы данных"
             )
 
@@ -90,7 +89,6 @@ class CalculatorRepository():
                     detail=f"Пользователь {user_id} не найден"
                 )
 
-            # Обновляем только переданные поля
             if email is not None:
                 user.email = email
             if first_name is not None:
@@ -149,19 +147,24 @@ class CalculatorRepository():
     async def create_calculation(self, calc: schemas.CalculationCreate):
         """Создать новый расчёт"""
         try:
-            db_calc = models.Calculation(**calc.model_dump())
+            db_calc = models.Calculation(
+                user_id=calc.user_id,
+                calc_type=calc.calc_type,
+                input_data=calc.input_data,
+                result=calc.result,
+                interpretation=calc.interpretation
+            )
             self.session.add(db_calc)
             await self.session.commit()
             await self.session.refresh(db_calc)
             logger.info(f"Создан расчёт {db_calc.calc_type} для пользователя {calc.user_id}")
-
             return db_calc
-
+            
         except SQLAlchemyError as e:
             await self.session.rollback()
             logger.error(f"Ошибка БД при создании расчёта: {e}")
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail="Ошибка при сохранении расчёта"
             )
 
@@ -207,8 +210,8 @@ class CalculatorRepository():
 
             query = (
                 query.order_by(desc(models.Calculation.created_at))
-                         .limit(limit)
-                         .offset(offset)
+                     .limit(limit)
+                     .offset(offset)
             )
 
             result = await self.session.execute(query)

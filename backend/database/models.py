@@ -11,12 +11,11 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now()
+    )
 
 class Calculation(Base):
     __tablename__ = "calculations"
@@ -27,7 +26,7 @@ class Calculation(Base):
     input_data: Mapped[str] = mapped_column(Text) 
     result: Mapped[float] = mapped_column(Float)
     interpretation: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
 
 class HealthMetric(Base):
     __tablename__ = "health_metrics"
@@ -38,4 +37,4 @@ class HealthMetric(Base):
     value: Mapped[float] = mapped_column(Float)
     unit: Mapped[str] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
