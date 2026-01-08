@@ -2,8 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Annotated
 
-#USER SCHEMAS
-
+# USER SCHEMAS
 class UserBase(BaseModel):
     user_id: str
     email: Optional[str] = None
@@ -22,8 +21,7 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-#CALCULATION SCHEMAS
-
+# CALCULATION SCHEMAS
 class CalculationBase(BaseModel):
     user_id: str
     calc_type: str
@@ -41,13 +39,14 @@ class CalculationResponse(CalculationBase):
     class Config:
         from_attributes = True
 
-#MEDICAL CALCULATION INPUTS
-
+# MEDICAL CALCULATION INPUTS 
 class IMTInput(BaseModel):
+    user_id: str = Field(..., description="ID пользователя из localStorage")
     weight: Annotated[float, Field(gt=0, description="Вес в кг")]
     height: Annotated[float, Field(gt=0, description="Рост в см")]
 
 class CaloriesInput(BaseModel):
+    user_id: str = Field(..., description="ID пользователя из localStorage")
     age: Annotated[int, Field(gt=0, le=150)]
     weight: Annotated[float, Field(gt=0)]
     height: Annotated[float, Field(gt=0)]
@@ -55,9 +54,11 @@ class CaloriesInput(BaseModel):
     activity: Annotated[float, Field(default=1.5, ge=1.2, le=1.9)]
 
 class BloodPressureInput(BaseModel):
+    user_id: str = Field(..., description="ID пользователя из localStorage")
     systolic: Annotated[int, Field(ge=50, le=250)]
     diastolic: Annotated[int, Field(ge=30, le=150)]
 
+# HEALTH METRICS
 class HealthMetricBase(BaseModel):
     metric_type: str
     value: float
