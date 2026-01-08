@@ -97,7 +97,7 @@ async def calculate_calories_endpoint(
             height=data.height,
             age=data.age,
             gender=data.gender,
-            activity=data.activity,
+            activity_level=data.activity_level,
         )
         
         from backend.database.schemas import CalculationCreate
@@ -109,7 +109,7 @@ async def calculate_calories_endpoint(
                 "height": data.height,
                 "age": data.age,
                 "gender": data.gender,
-                "activity": data.activity,
+                "activity": data.activity_level,
             }),
             result=tdee,
             interpretation=f"БМР: {bmr:.0f} ккал, ТДЕЕ: {tdee:.0f} ккал ({activity_desc})",
