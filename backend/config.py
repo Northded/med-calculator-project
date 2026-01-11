@@ -1,7 +1,6 @@
 import os
 from pydantic_settings import SettingsConfigDict, BaseSettings
-from dotenv import load_dotenv
-from pathlib import Path
+
 
 class Settings(BaseSettings):
 
@@ -10,6 +9,9 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_PORT: int
     DB_HOST: str
+
+    API_NINJAS_KEY: str
+    API_NINJAS_ENABLED: bool 
 
     @property
     def DATABASE_URL(self):

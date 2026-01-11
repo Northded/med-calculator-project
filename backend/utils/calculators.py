@@ -210,7 +210,7 @@ def calculate_ideal_weight(height: float, gender: str) -> Tuple[float, float]:
     else:
         ideal_weight = 45.5 + 2.3 * (height_inches - 60)
 
-    # Допустимый диапазон ±10%
+    # Допустимый диапазон +-10%
     range_margin = ideal_weight * 0.1
 
     return round(ideal_weight, 1), round(range_margin, 1)

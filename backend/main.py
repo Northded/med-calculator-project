@@ -7,6 +7,8 @@ from contextlib import asynccontextmanager
 from backend.routes.calculations import router as calc_router
 from backend.routes.health import router as health_router
 from backend.database.db import create_db
+from backend.database.repository import CalculatorRepository
+from .deps import SessionDep
 
 
 logging.basicConfig(
@@ -70,6 +72,20 @@ async def log_requests(request: Request, call_next):
 
 app.include_router(health_router, prefix="/api")
 app.include_router(calc_router, prefix="/api")
+
+
+@app.get("/api/users/{user_id}/exists")
+async def check_user_exists(
+    user_id: str,
+    session: SessionDep
+):
+    """Проверить существует ли пользователь с данным ID"""
+    repo = CalculatorRepository(session)
+    exists = await repo.check_user_exists(user_id)
+    return {
+        "exists": exists,
+        "user_id": user_id
+    }
 
 
 if __name__ == "__main__":

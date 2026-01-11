@@ -27,17 +27,29 @@ export class AuthService {
         return userId;
     }
 
-
-    static register(userId) {
+    static async register(userId) {
         if (!userId || userId.trim() === '') {
             UIService.showError('Введите ID пользователя');
             return false;
         }
 
         const trimmedId = userId.trim();
-        StorageService.setUserId(trimmedId);
-        UIService.showSuccess(`ID изменён на: ${trimmedId}`);
+        
+        try {
+            const response = await fetch(`${CONFIG.API_URL}/users/${trimmedId}/exists`);
+            const data = await response.json();
+            
+            if (data.exists) {
+                UIService.showError(`ID "${trimmedId}" уже занят`);
+                return false;
+            }
+        } catch (error) {
+            console.warn('Не удалось проверить ID:', error);
+        }
 
+        StorageService.setUserId(trimmedId);
+        UIService.setInputValue('userId', trimmedId);
+        UIService.showSuccess(`ID изменён на: ${trimmedId}`);
         console.log('Пользователь обновлён:', trimmedId);
         return true;
     }

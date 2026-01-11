@@ -61,4 +61,16 @@ export class UIService {
             button.style.opacity = disabled ? '0.6' : '1';
         }
     }
+    
+    static setInputValue(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.value = value;
+        }
+    }
+
+    static getInputValue(elementId) {
+        const element = document.getElementById(elementId);
+        return element ? element.value : '';
+    }
 }

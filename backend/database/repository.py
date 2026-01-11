@@ -11,7 +11,7 @@ class CalculatorRepository():
     def __init__(self, session: SessionDep):
         self.session = session
 
-    # ===== USER OPERATIONS =====
+    # ===== USER OPERATIONS =====      
     async def get_or_create_user(self, user_id: str):
         """Получить существующего пользователя или создать нового"""
         try:
@@ -450,3 +450,15 @@ class CalculatorRepository():
                 status_code=500, 
                 detail="Ошибка базы данных"
             )
+
+    async def check_user_exists(self, user_id: str) -> bool:
+        """Проверить существует ли пользователь с таким ID"""
+        try:
+            result = await self.session.execute(
+                select(models.User).where(models.User.user_id == user_id)
+            )
+            user = result.scalar_one_or_none()
+            return user is not None
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка БД при проверке пользователя {user_id}: {e}")
+            return False

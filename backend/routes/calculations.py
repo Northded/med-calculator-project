@@ -1,29 +1,29 @@
-"""Маршруты для медицинских расчётов."""
-
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 import json
 import logging
-import time
-from uuid import uuid4
 
-from backend.database.db import get_session
+from backend.integrations.calories_burned import get_weight_loss_plan, CaloriesBurnedClient
+from backend.config import settings
 from backend.database.repository import CalculatorRepository
 from backend.database.schemas import (
     IMTInput,
     CaloriesInput,
     BloodPressureInput,
     CalculationResponse,
+    CalculationCreate
 )
 from backend.utils.calculators import (
     calculate_imt,
     calculate_calories,
     calculate_blood_pressure_category,
 )
+from ..deps import SessionDep
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
 
 @router.post(
     "/calculations/imt",
@@ -33,7 +33,7 @@ router = APIRouter()
 )
 async def calculate_imt_endpoint(
     data: IMTInput,
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
 ):
     """Расчёт ИМТ + автоматическое создание пользователя + сохранение в БД."""
     user_id = data.user_id
@@ -78,20 +78,21 @@ async def calculate_imt_endpoint(
     "/calculations/calories",
     response_model=CalculationResponse,
     summary="Расчёт суточной калорийности",
-    description="Расчёт по формуле Харриса-Бенедикта (1984)",
+    description="Расчёт по формуле Харриса-Бенедикта с рекомендациями по упражнениям от API Ninjas",
 )
 async def calculate_calories_endpoint(
     data: CaloriesInput,
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
 ):
-    """Расчёт калорий + автоматическое создание пользователя + сохранение в БД."""
+    """Расчёт калорий с РЕАЛЬНЫМИ рекомендациями по упражнениям от API Ninjas."""
     user_id = data.user_id
-    logger.info(f"Calories calc request for user_id: {user_id}")
-    
+    logger.info(f"Calories calculation request for user_id: {user_id}")
+
     try:
         repo = CalculatorRepository(session)
         await repo.get_or_create_user(user_id=user_id)
-        
+
+        # расчёт BMR и TDEE
         bmr, tdee, activity_desc = calculate_calories(
             weight=data.weight,
             height=data.height,
@@ -99,8 +100,85 @@ async def calculate_calories_endpoint(
             gender=data.gender,
             activity_level=data.activity_level,
         )
-        
-        from backend.database.schemas import CalculationCreate
+
+        interpretation = f"""Результаты расчёта метаболизма:
+
+• Базовый метаболизм (БМР): {bmr:.0f} ккал/день
+  (это калории, необходимые организму в покое)
+
+• Суточная калорийность (ТДЕЕ): {tdee:.0f} ккал/день
+  (с учётом вашей активности: {activity_desc})"""
+
+        # рекомендации от апи
+        if settings.API_NINJAS_ENABLED and settings.API_NINJAS_KEY:
+            try:
+                # рассчет ИМТ для определения стратегии
+                imt, _ = calculate_imt(data.weight, data.height)
+
+                if imt >= 25:  # избыточный вес - план похудения
+                    logger.info(f"BMI {imt:.1f} >= 25, generating weight loss plan with API")
+                    weight_loss_plan = get_weight_loss_plan(
+                        tdee=tdee,
+                        target_kg_per_week=0.5,
+                        weight=data.weight,
+                        api_key=settings.API_NINJAS_KEY
+                    )
+                    interpretation += f"\n\n{weight_loss_plan}"
+                    logger.info(f"Weight loss plan with API data added for {user_id}")
+
+                else:  # нормальный/недостаточный вес - поддержание здоровья
+                    logger.info(f"BMI {imt:.1f} < 25, fetching real exercises from API Ninjas")
+                    
+                    client = CaloriesBurnedClient(settings.API_NINJAS_KEY)
+                    
+                    # вызываем апи
+                    activities_to_try = ["running", "cycling", "swimming", "yoga"]
+                    api_results = []
+                    
+                    for activity in activities_to_try:
+                        try:
+                            result = await client.calculate_calories_burned(
+                                activity=activity,
+                                weight=data.weight,
+                                duration=30 
+                            )
+                            if result and len(result) > 0:
+                                api_results.append(result[0])  # 1 резщультат
+                                if len(api_results) >= 4:  # 4 активности макс
+                                    break
+                        except Exception as ex:
+                            logger.warning(f"Failed to fetch {activity} from API: {ex}")
+                            continue
+                    
+                    if api_results:
+                        # форматирование данных апи
+                        exercises_text = "💪 Рекомендации по физической активности (от API Ninjas):\n\n"
+                        exercises_text += f"🔥 Примеры 30-минутных тренировок для вашего веса ({data.weight:.0f} кг):\n\n"
+                        
+                        for ex in api_results:
+                            exercises_text += (
+                                f"• {ex['name']}\n"
+                                f"  Сожжёте: ~{ex['total_calories']:.0f} ккал за 30 минут\n"
+                                f"  ({ex['calories_per_hour']:.0f} ккал/час)\n\n"
+                            )
+                        
+                        exercises_text += "💡 Совет: Комбинируйте разные виды активности для лучшего результата!"
+                        interpretation += f"\n\n{exercises_text}"
+                        logger.info(f"Real API Ninjas data added for {user_id} ({len(api_results)} activities)")
+                    
+                    else:
+                        # лок генерацию, если апи не сработал
+                        logger.warning(f"API returned no data, using local recommendations")
+                        exercises = client.generate_exercise_recommendations(
+                            target_calories=300,
+                            weight=data.weight,
+                            fitness_level="intermediate"
+                        )
+                        interpretation += f"\n\n💪 Рекомендации по физической активности:\n{exercises}"
+
+            except Exception as e:
+                logger.warning(f"Failed to get API Ninjas recommendations: {str(e)}")
+
         calc = CalculationCreate(
             user_id=user_id,
             calc_type="calories",
@@ -109,14 +187,15 @@ async def calculate_calories_endpoint(
                 "height": data.height,
                 "age": data.age,
                 "gender": data.gender,
-                "activity": data.activity_level,
+                "activity_level": data.activity_level,
             }),
             result=tdee,
-            interpretation=f"БМР: {bmr:.0f} ккал, ТДЕЕ: {tdee:.0f} ккал ({activity_desc})",
+            interpretation=interpretation,
         )
-        
+
         calculation = await repo.create_calculation(calc)
-        
+        logger.info(f"Создан расчёт calories для пользователя {user_id}")
+
         return CalculationResponse(
             id=calculation.id,
             user_id=calculation.user_id,
@@ -126,13 +205,13 @@ async def calculate_calories_endpoint(
             interpretation=calculation.interpretation,
             created_at=calculation.created_at,
         )
-        
+
     except ValueError as e:
-        logger.error(f"Calories validation error for {user_id}: {str(e)}")
+        logger.error(f"Validation error for {user_id}: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Calories error for {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Ошибка при расчёте калорий: {str(e)}")
+        logger.error(f"Calories calculation error for {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении расчёта")
 
 
 @router.post(
@@ -143,7 +222,7 @@ async def calculate_calories_endpoint(
 )
 async def calculate_blood_pressure_endpoint(
     data: BloodPressureInput,
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
 ):
     """Анализ давления + автоматическое создание пользователя + сохранение в БД."""
     user_id = data.user_id
@@ -196,11 +275,11 @@ async def calculate_blood_pressure_endpoint(
     description="Получить историю всех расчётов пользователя",
 )
 async def get_history(
-    user_id: str = Query(..., description="Уникальный ID пользователя"),
+    session: SessionDep,
+    user_id: str = Query(description="Уникальный ID пользователя"),
     limit: int = Query(10, ge=1, le=100, description="Количество записей"),
     offset: int = Query(0, ge=0, description="Смещение"),
     calc_type: Optional[str] = Query(None, description="Тип расчёта (imt, calories, blood_pressure)"),
-    session: AsyncSession = Depends(get_session),
 ):
     """Получить историю расчётов по user_id."""
     logger.info(f"History request for user_id: {user_id}")
@@ -243,8 +322,8 @@ async def get_history(
     description="Общая статистика показателей здоровья пользователя",
 )
 async def get_stats(
-    user_id: str = Query(..., description="Уникальный ID пользователя"),
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
+    user_id: str = Query(description="Уникальный ID пользователя"),
 ):
     """Получить статистику расчётов по user_id."""
     logger.info(f"Stats request for user_id: {user_id}")
@@ -268,9 +347,9 @@ async def get_stats(
     description="Удаление конкретного расчёта из истории",
 )
 async def delete_calculation(
+    session: SessionDep,
     calculation_id: int,
-    user_id: str = Query(..., description="ID пользователя для проверки доступа"),
-    session: AsyncSession = Depends(get_session),
+    user_id: str = Query(description="ID пользователя для проверки доступа"),
 ):
     """Удалить расчёт по ID с проверкой владельца."""
     logger.info(f"Delete request for calculation_id: {calculation_id}, user_id: {user_id}")

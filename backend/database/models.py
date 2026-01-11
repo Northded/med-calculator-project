@@ -25,7 +25,7 @@ class Calculation(Base):
     calc_type: Mapped[str] = mapped_column(String(50)) 
     input_data: Mapped[str] = mapped_column(Text) 
     result: Mapped[float] = mapped_column(Float)
-    interpretation: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    interpretation: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
 
 class HealthMetric(Base):
