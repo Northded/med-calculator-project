@@ -45,7 +45,6 @@ async def calculate_imt_endpoint(
         
         result, interpretation = calculate_imt(data.weight, data.height)
         
-        from backend.database.schemas import CalculationCreate
         calc = CalculationCreate(
             user_id=user_id,
             calc_type="imt",
@@ -276,16 +275,20 @@ async def calculate_blood_pressure_endpoint(
 )
 async def get_history(
     session: SessionDep,
-    user_id: str = Query(description="Уникальный ID пользователя"),
-    limit: int = Query(10, ge=1, le=100, description="Количество записей"),
-    offset: int = Query(0, ge=0, description="Смещение"),
-    calc_type: Optional[str] = Query(None, description="Тип расчёта (imt, calories, blood_pressure)"),
+    user_id: str = Query(description="ID пользователя"),
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    calc_type: Optional[str] = Query(None),
 ):
-    """Получить историю расчётов по user_id."""
-    logger.info(f"History request for user_id: {user_id}")
+    logger.info(f"History request for {user_id}")
     try:
         repo = CalculatorRepository(session)
-        
+        all_calculations = await repo.get_user_calculations(
+            user_id=user_id,
+            calc_type=calc_type,
+            limit=9999,  
+            offset=0,
+        )
         calculations = await repo.get_user_calculations(
             user_id=user_id,
             calc_type=calc_type,
@@ -295,13 +298,13 @@ async def get_history(
         
         return {
             "user_id": user_id,
-            "total": len(calculations),
+            "total": len(all_calculations),  
             "limit": limit,
             "offset": offset,
             "calculations": [
                 {
                     "id": c.id,
-                    "type": c.calc_type,
+                    "calc_type": c.calc_type, 
                     "input_data": c.input_data,
                     "result": c.result,
                     "interpretation": c.interpretation,
@@ -310,10 +313,9 @@ async def get_history(
                 for c in calculations
             ],
         }
-        
     except Exception as e:
         logger.error(f"History error for {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Ошибка при получении истории: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка загрузки истории: {str(e)}")
 
 
 @router.get(

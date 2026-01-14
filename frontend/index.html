@@ -6,6 +6,96 @@
     <title>Медицинский Калькулятор | Университетский проект</title>
     <meta name="description" content="Калькулятор медицинских показателей: ИМТ, калории, давление">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Стили для пагинации */
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-pagination {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-pagination:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination-numbers {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .btn-page {
+            padding: 8px 12px;
+            background: white;
+            color: #333;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 40px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-page:hover {
+            background: #f0f0f0;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .btn-page.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            cursor: default;
+        }
+
+        .pagination-dots {
+            padding: 0 8px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .pagination-info {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .history-empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -140,17 +230,22 @@
             <!-- ИСТОРИЯ -->
             <section class="history-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h2 style="margin: 0;">🕒 История расчётов</h2>
+                    <h2 style="margin: 0;">📊 История расчётов</h2>
                     <button class="btn btn-blue" style="max-width: 200px;" onclick="loadHistory()">
-                        🔄 Обновить
+                        🔄 Обновить историю
                     </button>
                 </div>
+                
                 <div id="historyContainer" class="history-container">
                     <div class="history-empty">
                         <div class="history-empty-icon">📊</div>
-                        <p>История расчётов загружается...</p>
+                        <p>История расчётов пуста</p>
+                        <p style="font-size: 0.85em;">Используйте калькуляторы выше для начала работы</p>
                     </div>
                 </div>
+                
+                <!-- КОНТЕЙНЕР ДЛЯ ПАГИНАЦИИ -->
+                <div id="paginationContainer"></div>
             </section>
         </main>
 
