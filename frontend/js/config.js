@@ -9,11 +9,15 @@ export const CONFIG = {
     CALC_TYPE_LABELS: {
         'imt': 'ИМТ',
         'calories': 'Калории',
+        'bloodpressure': 'Давление',
+        'blood-pressure': 'Давление',
         'blood_pressure': 'Давление'
     },
     CALC_TYPE_ICONS: {
         'imt': '📏',
         'calories': '⚡',
+        'bloodpressure': '❤️',
+        'blood-pressure': '❤️',
         'blood_pressure': '❤️'
     }
 };
