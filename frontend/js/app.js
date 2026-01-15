@@ -32,7 +32,6 @@ window.calculateIMT = () => imtCalc.calculate();
 window.calculateCalories = () => caloriesCalc.calculate();
 window.calculateBP = () => bpCalc.calculate();
 
-// ВАЖНО: функция должна быть в window
 window.loadHistory = (offset = 0) => HistoryService.loadHistory(offset);
 window.deleteCalculation = (id) => HistoryService.deleteCalculation(id);
 
@@ -41,17 +40,17 @@ window.selectGender = (gender) => {
 };
 
 async function init() {
-    console.log('🏥 Медицинский Калькулятор загружен');
-    console.log('🌐 API URL:', CONFIG.API_URL);
+    console.log('Медицинский Калькулятор загружен');
+    console.log('API URL:', CONFIG.API_URL);
 
     const userId = AuthService.autoInit();
     console.log('👤 Текущий пользователь:', userId);
 
     try {
         const health = await api.checkHealth();
-        console.log('✅ Backend доступен:', health);
+        console.log('Backend доступен:', health);
     } catch (error) {
-        console.warn('⚠️ Backend недоступен:', error.message);
+        console.warn('Backend недоступен:', error.message);
         UIService.showError('Backend недоступен. Проверьте что сервер запущен.');
     }
 

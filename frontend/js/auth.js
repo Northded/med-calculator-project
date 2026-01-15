@@ -13,7 +13,7 @@ export class AuthService {
         let userId = StorageService.getUserId();
 
         if (!userId) {
-            // Генерируем новый ID если его нет
+            //новый ID если его нет
             userId = this.generateUserId();
             StorageService.setUserId(userId);
             console.log('Создан новый пользователь:', userId);
@@ -63,7 +63,7 @@ export class AuthService {
         UIService.setInputValue('userId', newUserId);
         UIService.showSuccess(`Новый ID создан: ${newUserId}`);
 
-        console.log('🔄 Создан новый ID:', newUserId);
+        console.log('Создан новый ID:', newUserId);
         return true;
     }
 
@@ -77,7 +77,7 @@ export class AuthService {
 
         setTimeout(() => this.autoInit(), 500);
 
-        console.log('👋 Пользователь вышел');
+        console.log('Пользователь вышел');
         return true;
     }
 

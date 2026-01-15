@@ -27,7 +27,7 @@ export class IMTCalculator extends BaseCalculator {
         }
 
         try {
-            console.log('📤 Отправка запроса ИМТ:', { user_id: this.getUserId(), weight, height });
+            console.log('Отправка запроса ИМТ:', { user_id: this.getUserId(), weight, height });
             
             const data = await api.calculateIMT({
                 user_id: this.getUserId(),
