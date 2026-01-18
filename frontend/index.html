@@ -7,7 +7,6 @@
     <meta name="description" content="Калькулятор медицинских показателей: ИМТ, калории, давление">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Стили для пагинации */
         .pagination-controls {
             display: flex;
             align-items: center;
@@ -226,8 +225,36 @@
                     <div id="bpResult" class="result-box" style="display:none;"></div>
                 </div>
             </div>
+            <section class="charts-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="margin: 0;">📈 Анализ динамики показателей</h2>
+                    <button class="btn btn-blue" style="max-width: 200px;" onclick="loadCharts()">
+                        🔄 Обновить графики
+                    </button>
+                </div>
 
-            <!-- ИСТОРИЯ -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>📊 Индекс массы тела (ИМТ)</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="imtChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>🔥 Суточная калорийность (TDEE)</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="caloriesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>❤️ Артериальное давление</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="pressureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="history-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h2 style="margin: 0;">📊 История расчётов</h2>
@@ -243,8 +270,7 @@
                         <p style="font-size: 0.85em;">Используйте калькуляторы выше для начала работы</p>
                     </div>
                 </div>
-                
-                <!-- КОНТЕЙНЕР ДЛЯ ПАГИНАЦИИ -->
+            
                 <div id="paginationContainer"></div>
             </section>
         </main>
@@ -258,5 +284,7 @@
 
     <!-- Главный модуль приложения -->
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/charts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
 </html>
