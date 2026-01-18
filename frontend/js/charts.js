@@ -243,3 +243,4 @@ export class ChartsService {
 }
 
 window.loadCharts = () => ChartsService.loadCharts();
+window.ChartsService = ChartsService;
