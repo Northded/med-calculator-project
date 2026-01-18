@@ -16,8 +16,8 @@ export class HistoryService {
 
         try {
             const data = await api.getHistory(userId, this.currentLimit, offset);
-            console.log('📊 История загружена:', data);
-            console.log('📊 Первый элемент:', data.calculations?.[0]);
+            console.log('История загружена:', data);
+            console.log('Первый элемент:', data.calculations?.[0]);
             
             this.totalRecords = data.total || 0;
             
@@ -58,7 +58,7 @@ export class HistoryService {
         const totalPages = Math.ceil(this.totalRecords / this.currentLimit);
         const currentPage = Math.floor(this.currentOffset / this.currentLimit) + 1;
 
-        console.log('📄 Пагинация:', { totalRecords: this.totalRecords, totalPages, currentPage });
+        console.log('Пагинация:', { totalRecords: this.totalRecords, totalPages, currentPage });
 
         if (totalPages <= 1) {
             container.innerHTML = `
@@ -71,7 +71,6 @@ export class HistoryService {
 
         let html = '<div class="pagination-controls">';
 
-        // Кнопка "Назад"
         const prevOffset = (currentPage - 2) * this.currentLimit;
         html += `
             <button 
@@ -82,7 +81,6 @@ export class HistoryService {
             </button>
         `;
 
-        // Номера страниц
         html += '<div class="pagination-numbers">';
         
         const maxVisible = 5;
@@ -133,7 +131,6 @@ export class HistoryService {
 
         html += '</div>';
 
-        // Кнопка "Вперёд"
         const nextOffset = currentPage * this.currentLimit;
         html += `
             <button 
@@ -146,7 +143,6 @@ export class HistoryService {
 
         html += '</div>';
 
-        // Информация о записях
         const from = this.currentOffset + 1;
         const to = Math.min(this.currentOffset + this.currentLimit, this.totalRecords);
         html += `
@@ -159,12 +155,10 @@ export class HistoryService {
     }
 
     static createHistoryItem(calc) {
-        console.log('🔍 Создание карточки для:', calc);
+        console.log('Создание карточки для:', calc);
         
-        // ВАЖНО: бэкенд возвращает поле "type" а не "calc_type"
         const rawCalcType = calc.type || calc.calc_type || 'unknown';
         
-        // Нормализуем (заменяем _ на -)
         const calcType = typeof rawCalcType === 'string' 
             ? rawCalcType.replace(/_/g, '-') 
             : 'unknown';
@@ -179,7 +173,7 @@ export class HistoryService {
         
         const date = new Date(calc.created_at).toLocaleString('ru-RU');
 
-        console.log('✅ Карточка:', { 
+        console.log('Карточка:', { 
             rawCalcType, 
             calcType, 
             icon, 
@@ -223,5 +217,4 @@ export class HistoryService {
     }
 }
 
-// Экспорт в window для доступа из HTML
 window.HistoryService = HistoryService;

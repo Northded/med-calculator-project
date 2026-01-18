@@ -2,18 +2,16 @@ import { api } from './api.js';
 import { AuthService } from './auth.js';
 import { UIService } from './ui.js';
 
-// ========== BASE CALCULATOR ==========
 export class BaseCalculator {
     checkAuth() {
         return AuthService.requireAuth();
     }
-    
+
     getUserId() {
         return AuthService.getCurrentUserId();
     }
 }
 
-// ========== IMT CALCULATOR ==========
 export class IMTCalculator extends BaseCalculator {
     async calculate() {
         if (!this.checkAuth()) return;
@@ -27,8 +25,8 @@ export class IMTCalculator extends BaseCalculator {
         }
 
         try {
-            console.log('📤 Отправка запроса ИМТ:', { user_id: this.getUserId(), weight, height });
-            
+            console.log('Отправка запроса ИМТ:', { user_id: this.getUserId(), weight, height });
+
             const data = await api.calculateIMT({
                 user_id: this.getUserId(),
                 weight,
@@ -45,19 +43,20 @@ export class IMTCalculator extends BaseCalculator {
 
             const imt = data.result;
             const category = this.getIMTCategory(imt);
-            
+
             UIService.showResult('imtResult', {
                 value: imt.toFixed(1),
                 interpretation: data.interpretation || category.text,
                 unit: 'кг/м²'
             }, category.class);
-            
-            UIService.showSuccess('Расчёт ИМТ сохранён!');
-            
+
+            UIService.showSuccess('✅ Расчёт ИМТ сохранён!');
+
             setTimeout(() => {
                 if (window.loadHistory) window.loadHistory();
+                if (window.loadCharts) window.loadCharts();
             }, 500);
-            
+
         } catch (error) {
             console.error('Ошибка расчёта ИМТ:', error);
             UIService.showError(error.message || 'Ошибка расчёта ИМТ');
@@ -83,7 +82,6 @@ export class IMTCalculator extends BaseCalculator {
     }
 }
 
-// ========== CALORIES CALCULATOR ==========
 export class CaloriesCalculator extends BaseCalculator {
     constructor() {
         super();
@@ -94,7 +92,6 @@ export class CaloriesCalculator extends BaseCalculator {
         this.selectedGender = gender;
         document.getElementById('genderM').classList.remove('active');
         document.getElementById('genderF').classList.remove('active');
-
         if (gender === 'м') {
             document.getElementById('genderM').classList.add('active');
         } else {
@@ -127,16 +124,16 @@ export class CaloriesCalculator extends BaseCalculator {
                 weight,
                 height,
                 gender: this.selectedGender,
-                activity
+                activity_level: activity
             });
-            
+
             const data = await api.calculateCalories({
                 user_id: this.getUserId(),
                 age,
                 weight,
                 height,
                 gender: this.selectedGender,
-                activity
+                activity_level: activity
             });
 
             console.log('Ответ backend (Калории):', data);
@@ -154,13 +151,14 @@ export class CaloriesCalculator extends BaseCalculator {
                 interpretation: data.interpretation || `Суточная калорийность: ${Math.round(tdee)} ккал`,
                 unit: 'ккал/день'
             }, 'success');
-            
-            UIService.showSuccess('Расчёт калорий сохранён!');
+
+            UIService.showSuccess('✅ Расчёт калорий сохранён!');
 
             setTimeout(() => {
                 if (window.loadHistory) window.loadHistory();
+                if (window.loadCharts) window.loadCharts();
             }, 500);
-            
+
         } catch (error) {
             console.error('Ошибка расчёта калорий:', error);
             UIService.showError(error.message || 'Ошибка расчёта калорий');
@@ -168,7 +166,6 @@ export class CaloriesCalculator extends BaseCalculator {
     }
 }
 
-// ========== BLOOD PRESSURE CALCULATOR ==========
 export class BloodPressureCalculator extends BaseCalculator {
     async calculate() {
         if (!this.checkAuth()) return;
@@ -192,7 +189,7 @@ export class BloodPressureCalculator extends BaseCalculator {
                 systolic,
                 diastolic
             });
-            
+
             const data = await api.calculateBloodPressure({
                 user_id: this.getUserId(),
                 systolic,
@@ -211,9 +208,9 @@ export class BloodPressureCalculator extends BaseCalculator {
             if (data.interpretation) {
                 if (data.interpretation.includes('криз') || data.interpretation.includes('II')) {
                     categoryClass = 'danger';
-                } else if (data.interpretation.includes('Гипертония') || 
-                           data.interpretation.includes('Повышенное') ||
-                           data.interpretation.includes('I степени')) {
+                } else if (data.interpretation.includes('Гипертония') ||
+                          data.interpretation.includes('Повышенное') ||
+                          data.interpretation.includes('I степени')) {
                     categoryClass = 'warning';
                 }
             }
@@ -223,13 +220,14 @@ export class BloodPressureCalculator extends BaseCalculator {
                 interpretation: data.interpretation || 'Давление измерено',
                 unit: 'мм рт.ст.'
             }, categoryClass);
-            
-            UIService.showSuccess('Анализ давления сохранён!');
+
+            UIService.showSuccess('✅ Анализ давления сохранён!');
 
             setTimeout(() => {
                 if (window.loadHistory) window.loadHistory();
+                if (window.loadCharts) window.loadCharts();
             }, 500);
-            
+
         } catch (error) {
             console.error('Ошибка анализа давления:', error);
             UIService.showError(error.message || 'Ошибка анализа давления');
